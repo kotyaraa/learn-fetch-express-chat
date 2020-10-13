@@ -7,11 +7,57 @@
 </head>
 <body>
     <div id="chat-message">
+
+    </div> 
         <form>
             <input type="text" name="name" placeholder="Name">
             <input type="text" name="message" placeholder="Message">
             <input type="submit">
         </form>
-    </div> 
+    
+
+    <script>
+        const serverUrl = 'http://localhost:3000' ;
+
+        const form = document.querySelector('form') ;
+        const chatMessage = document.querySelector('#chat-message') ;
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = form.name.value ;
+            const message = form.message.value ;
+            postMessage(name, message)
+        })
+
+        async function postMessage(name, message){
+            const historyPosts = await fetch(`${serverUrl}/history`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name, 
+                    message,
+                })
+            });
+            const history = await historyPosts.json();
+            renderHistory(history);
+        }
+
+        function renderHistory(history) {
+            chatMessage.innerHTML = history.reduce((html, {
+                name,
+                message
+            }) => {
+                html += `
+            <div>
+            <span><strong>${name}</strong>:</span> <span>${message}</span>
+            </div>
+            `
+            return html;
+            }, "") 
+        }
+
+    </script>
 </body>
 </html>
