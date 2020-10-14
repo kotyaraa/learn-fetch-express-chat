@@ -1,63 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
+
 <body>
-    <div id="chat-message">
+    <div class="chat"></div>
+    <form>
+        <input type="text" name="name" placeholder="Name">
+        <input type="text" name="message" placeholder="Message">
+        <input type="submit">
+        <button id='deleteHistory' type="button">Delete</button>
 
-    </div> 
-        <form>
-            <input type="text" name="name" placeholder="Name">
-            <input type="text" name="message" placeholder="Message">
-            <input type="submit">
-        </form>
-    
-
+    </form>
     <script>
-        const serverUrl = 'http://localhost:3000' ;
+        const form = document.querySelector('form');
+        const chat = document.querySelector('.chat');
+        const btnDeleteHistory = document.querySelector('#deleteHistory');
 
-        const form = document.querySelector('form') ;
-        const chatMessage = document.querySelector('#chat-message') ;
-
+        const serverURL = 'http://localhost:8080';
         form.addEventListener('submit', (e) => {
             e.preventDefault();
-            const name = form.name.value ;
-            const message = form.message.value ;
-            postMessage(name, message)
+            const name = form.name.value;
+            const message = form.message.value;
+            postMessage(name, message);
         })
+        btnDeleteHistory.addEventListener('click', (e) => {
+            deleteHistory()
+        })
+        async function deleteHistory() {
+            const historyRaw = await fetch(`${serverURL}/history`, {
+                method: 'DELETE',
+            })
+            const history = await historyRaw.json();
+            renderHistory(history)
+        }
 
-        async function postMessage(name, message){
-            const historyPosts = await fetch(`${serverUrl}/history`, {
-                method: 'POST',
+        async function postMessage(name, message) {
+            const historyRaw = await fetch(`${serverURL}/history`, {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json'
+                    "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    name, 
+                    name,
                     message,
-                })
+
+                }),
             });
-            const history = await historyPosts.json();
-            renderHistory(history);
+            const history = await historyRaw.json();
+            renderHistory(history)
         }
 
         function renderHistory(history) {
-            chatMessage.innerHTML = history.reduce((html, {
+            chat.innerHTML = history.reduce((html, {
                 name,
-                message
+                message,
+                id
             }) => {
                 html += `
-            <div>
-            <span><strong>${name}</strong>:</span> <span>${message}</span>
-            </div>
-            `
-            return html;
-            }, "") 
-        }
+                <div>
+                    <span>${name}: </span>  <span>${message}</span>
+                    <button onclick = "editMsg('${id}')">Edit</button> <button onclick = "deleteMsg('${id}')">Delete</button>
 
+                        </div>
+                `;
+                return html;
+            }, "")
+
+        }
+        async function deleteMsg(id) {
+            const historyRaw = await fetch(`${serverURL}/history/${id}`, {
+                method: 'DELETE'
+            })
+            const history = await historyRaw.json();
+            renderHistory(history)
+        }
+        async function editMsg(id) {
+            const historyRaw = await fetch(`${serverURL}/history/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json'},
+            body: JSON.stringify({message: prompt('Please enter new message')})
+            })
+            const history = await historyRaw.json();
+            renderHistory(history)
+        }
     </script>
 </body>
+
 </html>
